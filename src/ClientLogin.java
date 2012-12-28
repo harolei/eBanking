@@ -24,10 +24,11 @@ public class ClientLogin extends JFrame implements ActionListener{
     private JButton registerBtn;
     private static final String PREFERRED_LOOK_AND_FEEL = "javax.swing.plaf.metal.MetalLookAndFeel";
 
-    private static final String HOST = "localhost";
+    private DBConnection connection;
 
     public ClientLogin() {
         initComponents();
+        connection = new DBConnection();
     }
 
     private void initComponents() {
@@ -133,6 +134,42 @@ public class ClientLogin extends JFrame implements ActionListener{
             reg.setVisible(true);
 
             this.dispose();
+        }
+        if(e.getActionCommand().equals("Login")){
+            String username = this.usernameText.getText();
+            String password = new String(this.passwordText.getPassword());
+            if(username.equals("admin")&&password.equals("admin")){
+                Administrator admin = new Administrator();
+                admin.setDefaultCloseOperation(EBankingClient.EXIT_ON_CLOSE);
+                admin.setTitle("eBanking");
+                admin.getContentPane().setPreferredSize(admin.getSize());
+                admin.pack();
+                admin.setLocationRelativeTo(null);
+                admin.setVisible(true);
+
+                this.dispose();
+            }
+            else{
+                boolean log = connection.finduser(username,password);
+                JFrame parent = new JFrame();
+                if(log){
+                    JOptionPane.showMessageDialog(parent, "Welcome!");
+                    EBankingClient client = new EBankingClient(username);
+                    client.setDefaultCloseOperation(EBankingClient.EXIT_ON_CLOSE);
+                    client.setTitle("eBanking");
+                    client.getContentPane().setPreferredSize(client.getSize());
+                    client.pack();
+                    client.setLocationRelativeTo(null);
+                    client.setVisible(true);
+
+                    this.dispose();
+                }
+                else{
+                    JOptionPane.showMessageDialog(parent, "Log in failed!");
+                    this.usernameText.setText("");
+                    this.passwordText.setText("");
+                }
+            }
         }
     }
     public static void main(String[] args) {

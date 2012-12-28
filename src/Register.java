@@ -1,6 +1,8 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Vector;
+
 import org.dyno.visual.swing.layouts.Constraints;
 import org.dyno.visual.swing.layouts.GroupLayout;
 import org.dyno.visual.swing.layouts.Leading;
@@ -41,10 +43,11 @@ public class Register extends JFrame implements ActionListener {
     private JButton cancelBtn;
     private JButton submitBtn;
     //private static final String PREFERRED_LOOK_AND_FEEL = "javax.swing.plaf.metal.MetalLookAndFeel";
-    private static final String HOST = "localhost";
+    private DBConnection connection;
 
     public Register() {
         initComponents();
+        connection = new DBConnection();
     }
 
     private void initComponents() {
@@ -290,6 +293,36 @@ public class Register extends JFrame implements ActionListener {
         return jLabel0;
     }
     public void actionPerformed(ActionEvent e) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        if(e.getActionCommand().equals("Submit")){
+            String username = this.usernameText.getText();
+            Vector<String> userinfo = new Vector<String>();
+            userinfo.addElement(username);
+            userinfo.addElement(new String(this.paaswordText.getPassword()));
+            userinfo.addElement(this.titleCom.getSelectedItem().toString());
+            userinfo.addElement(this.firstnameText.getText());
+            userinfo.addElement(this.lastnameText.getText());
+            userinfo.addElement(this.addressText.getText());
+            userinfo.addElement(this.phoneNoText.getText());
+            userinfo.addElement(this.emailText.getText());
+            userinfo.addElement(this.accountNoText.getText());
+            JFrame parent = new JFrame();
+            String result = connection.addUser(userinfo);
+            System.out.print(result);
+            if(result.equals("OK")){
+                JOptionPane.showMessageDialog(parent, "Register Success!Welcome!");
+                EBankingClient client = new EBankingClient(username);
+                client.setDefaultCloseOperation(EBankingClient.EXIT_ON_CLOSE);
+                client.setTitle("eBanking");
+                client.getContentPane().setPreferredSize(client.getSize());
+                client.pack();
+                client.setLocationRelativeTo(null);
+                client.setVisible(true);
+
+                this.dispose();
+            }
+            else{
+                JOptionPane.showMessageDialog(parent, result);
+            }
+        }
     }
 }

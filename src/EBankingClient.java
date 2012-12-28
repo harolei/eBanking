@@ -2,6 +2,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
+import java.util.Vector;
+
 import org.dyno.visual.swing.layouts.Bilateral;
 import org.dyno.visual.swing.layouts.Constraints;
 import org.dyno.visual.swing.layouts.GroupLayout;
@@ -16,7 +19,6 @@ import org.dyno.visual.swing.layouts.Trailing;
  * To change this template use File | Settings | File Templates.
  */
 public class EBankingClient extends JFrame implements ActionListener{
-    private static final String HOST = "localhost";
     private static final long serialVersionUID = 1L;
     private JLabel jLabel0;
     private JTabbedPane jTabbedPane0;
@@ -53,10 +55,13 @@ public class EBankingClient extends JFrame implements ActionListener{
     private JButton addConfirmBtn;
     private JButton jButton4;
 
+    private DBConnection connection;
+
     public EBankingClient(String username) {
         initComponents();
-        //getIntialInfo(username);
-        //getAccountInfo(username);
+        connection = new DBConnection();
+        getIntialInfo(username);
+        getAccountInfo(username);
     }
 
     private void initComponents() {
@@ -375,6 +380,111 @@ public class EBankingClient extends JFrame implements ActionListener{
         return jLabel0;
     }
     public void actionPerformed(ActionEvent e) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        if(e.getActionCommand().equals("Add Account")){
+            this.jPanel4.setVisible(true);
+        }
+        if(e.getActionCommand().equals("Add")){
+            String newAccount = null;
+            String username = null;
+            newAccount = this.accountNumText.getText();
+            username = this.usernameText.getText();
+            String result = null;
+            try {
+                result = connection.userAddAccount(username, newAccount);
+            } catch (SQLException e1) {
+                e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            JFrame parent = new JFrame();
+            if(result.startsWith("OK")){
+                this.accountNumText.setText("");
+                getAccountInfo(username);
+                JOptionPane.showMessageDialog(parent, result);
+                this.jPanel4.setVisible(false);
+            }
+            else{
+                JOptionPane.showMessageDialog(parent, result);
+                this.accountNumText.setText("");
+            }
+        }
+        if(e.getActionCommand().equals(this.cancelAddBtn)){
+            this.jPanel4.setVisible(false);
+        }
+        if(e.getActionCommand().equals("Confirm")){
+            String accountNum = this.currentCom.getSelectedItem().toString();
+            int amount = Integer.parseInt(this.newAccountNoText.getText());
+            String result = null;
+            String username = this.usernameText.getText();
+            JFrame parent = new JFrame();
+            try {
+                result = connection.withdrawalMoney(accountNum, amount);
+            } catch (SQLException e1) {
+                e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            if(result.startsWith("Success!")){
+                JOptionPane.showMessageDialog(parent, result);
+                getAccountInfo(username);
+                this.newAccountNoText.setText("");
+            }
+            else{
+                JOptionPane.showMessageDialog(parent, result);
+                this.accountNumText.setText("");
+            }
+        }
+    }
+
+    private void getAccountInfo(String username){
+        Vector<String> result = new Vector<String>();
+        try {
+            result = connection.getAccountInfo(username);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        int sizeofVec = result.size();
+        int numofAccount = sizeofVec/2;
+        String[] arr = new String[2];
+        String[] accountN = new String[numofAccount];
+        DefaultTableModel tableModel = (DefaultTableModel)accountTable.getModel();
+        DefaultComboBoxModel comboModel = (DefaultComboBoxModel)this.currentCom.getModel();
+        comboModel.removeAllElements();
+        tableModel.setRowCount(0);
+        for(int i=0;i<numofAccount;i++){   //add the account details to the JTable
+            for(int j=0;j<2;j++){
+                arr[j] = result.elementAt(i*2+j);
+            }
+            tableModel.addRow(arr);
+            accountN[i] = result.elementAt(i*2);
+            comboModel.addElement(accountN[i]);
+        }
+
+    }
+
+    private void getIntialInfo(String username) {
+        Vector<String> result = new Vector<String>();
+        String firstname = null;
+        String lastname = null;
+        String title = null;
+        String address = null;
+        String phoneNo = null;
+        String email = null;
+        try {
+            result = connection.getInitialInfo(username);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if(!result.isEmpty()){
+            firstname = result.elementAt(0);
+            lastname = result.elementAt(1);
+            title = result.elementAt(2);
+            address = result.elementAt(3);
+            phoneNo = result.elementAt(4);
+            email = result.elementAt(5);
+        }
+        this.firstnameText.setText(firstname);
+        this.lastnameText.setText(lastname);
+        this.titleText.setText(title);
+        this.addressText.setText(address);
+        this.phoneText.setText(phoneNo);
+        this.emailText.setText(email);
+        this.usernameText.setText(username);
     }
 }
